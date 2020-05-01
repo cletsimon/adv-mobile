@@ -7,11 +7,17 @@ const authReducer = (state, action) => {
   switch (action.type) {
     case "add_error":
       return { ...state, errorMessage: action.payload };
-    case "signup":
+    case "signin":
       return { errorMessage: "", token: action.payload };
+    case "clear_error_message":
+      return { ...state, errorMessage: "" };
     default:
       return state;
   }
+};
+
+const clearErrorMessage = dispatch => () => {
+  dispatch({ type: "clear_error_message" });
 };
 
 const signup = dispatch => async ({ email, password }) => {
@@ -22,7 +28,7 @@ const signup = dispatch => async ({ email, password }) => {
     const response = await trackerApi.post("/signup", { email, password });
     // save token to storage
     await AsyncStorage.setItem("token", response.data.token);
-    dispatch({ type: "signup", payload: response.data.token });
+    dispatch({ type: "signin", payload: response.data.token });
 
     navigate("TrackList");
   } catch (err) {
@@ -33,12 +39,22 @@ const signup = dispatch => async ({ email, password }) => {
   }
 };
 
-const signin = dispatch => {
-  return ({ email, password }) => {
-    // try to signin
-    // handle success by updating state
-    // handle failure by showing error message somehow
-  };
+const signin = dispatch => async ({ email, password }) => {
+  // try to signin
+  // handle success by updating state
+  // handle failure by showing error message somehow
+  try {
+    const response = await trackerApi.post("/signin", { email, password });
+    await AsyncStorage.setItem("token", response.data.token);
+    dispatch({ type: "signin", payload: response.data.token });
+
+    navigate("TrackList");
+  } catch (err) {
+    dispatch({
+      type: "add_error",
+      payload: "Something went wrong with the sign in"
+    });
+  }
 };
 
 const signout = dispatch => {
@@ -49,6 +65,6 @@ const signout = dispatch => {
 
 export const { Provider, Context } = createDataContext(
   authReducer,
-  { signup, signin, signout },
+  { signup, signin, signout, clearErrorMessage },
   { token: null, errorMessage: "" }
 );

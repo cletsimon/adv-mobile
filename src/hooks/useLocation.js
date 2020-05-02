@@ -34,6 +34,12 @@ export default (shouldTrack, callback) => {
       subscriber.remove();
       setSubscriber(null);
     }
+
+    return () => {
+      if (subscriber) {
+        subscriber.remove();
+      }
+    };
   }, [shouldTrack, callback]);
 
   return [err];
